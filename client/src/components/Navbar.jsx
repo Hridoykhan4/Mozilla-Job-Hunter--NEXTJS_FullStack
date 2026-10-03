@@ -8,7 +8,6 @@ function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { data: session } = useSession();
     const user = session?.user;
-    console.log(user);
 
     const handleSignOut = async () => {
         await signOut();
@@ -96,20 +95,20 @@ function Navbar() {
                                     </>
                                     :
                                     <Link
-                                        href="/auth/signin"
+                                        href="/signin"
                                         className="text-sm font-medium text-violet-400 transition hover:text-violet-300"
                                     >
                                         Sign In
                                     </Link>}
 
-                            <Button
-                                as={Link}
-                                href="/register"
-                                radius="lg"
-                                className="h-11 bg-white px-6 text-sm font-semibold text-black hover:bg-gray-200"
-                            >
-                                Get Started
-                            </Button>
+                            <Link href="/signup">
+                                <Button
+                                    radius="lg"
+                                    className="h-11 bg-white px-6 text-sm font-semibold text-black hover:bg-gray-200"
+                                >
+                                    Get Started
+                                </Button>
+                            </Link>
                         </div>
                     </div>
 
@@ -177,21 +176,21 @@ function Navbar() {
                         <div className="border-t border-white/10 pt-4">
                             <div className="flex flex-col gap-3">
                                 <Link
-                                    href="/login"
+                                    href="/signin"
                                     className="rounded-xl px-4 py-3 text-base font-medium text-violet-400 transition hover:bg-white/5"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
                                     Sign In
                                 </Link>
 
-                                <Button
-                                    as={Link}
-                                    href="/register"
-                                    className="bg-white font-semibold text-black"
-                                    radius="lg"
-                                >
-                                    Get Started
-                                </Button>
+                                <Link href="/signup">
+                                    <Button
+                                        radius="lg"
+                                        className="h-11 bg-white px-6 text-sm font-semibold text-black hover:bg-gray-200"
+                                    >
+                                        Get Started
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
                     </div>
