@@ -33,6 +33,13 @@ async function run() {
     const db = client.db(process.env.DB_NAME);
     const jobsCollection = db.collection("jobs");
 
+    app.get("/api/jobs", async (req, res) => {
+      console.log("Hi");
+      let query = {};
+      const result = await jobsCollection.find().toArray();
+      return res.send(result);
+    });
+
     // POST Route: নতুন Job তৈরি করার জন্য
     app.post("/api/jobs", async (req, res) => {
       try {

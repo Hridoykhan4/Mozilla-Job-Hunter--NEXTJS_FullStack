@@ -58,7 +58,7 @@ const PostJobForm = () => {
         };
         const res = await createJob(payload);
         console.log(res);
-        if (res.insertedId) {
+        if (res.success) {
             toast.success("Job posted successfully!");
             e.target.reset();
             setIsRemote(false);
