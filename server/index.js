@@ -33,12 +33,14 @@ async function run() {
     const db = client.db(process.env.DB_NAME);
     const jobsCollection = db.collection("jobs");
 
-
     // POST Route: নতুন Job তৈরি করার জন্য
     app.post("/api/jobs", async (req, res) => {
       try {
         const jobData = req.body;
-        const result = await jobsCollection.insertOne(jobData);
+        const result = await jobsCollection.insertOne({
+          ...jobData,
+          createdAt: new Date().toISOString(),
+        });
         res.status(201).json({ success: true, result });
       } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -51,9 +53,6 @@ async function run() {
 
 run().catch(console.dir);
 
-
-
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-
