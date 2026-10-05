@@ -1,6 +1,6 @@
 "use server";
 export const createJob = async (jobData) => {
-  const res = await fetch(`${process.env.BETTER_AUTH_URL}/api/jobs`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/jobs`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -13,4 +13,3 @@ export const createJob = async (jobData) => {
   }
   return { success: true, data };
 };
-    
