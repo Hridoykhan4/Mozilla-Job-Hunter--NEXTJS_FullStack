@@ -32,11 +32,18 @@ async function run() {
 
     const db = client.db(process.env.DB_NAME);
     const jobsCollection = db.collection("jobs");
+    const companyCollection = db.collection("companies");
 
     app.get("/api/jobs", async (req, res) => {
-      console.log("Hi");
       let query = {};
-      const result = await jobsCollection.find().toArray();
+      console.log(req.query);
+      if (req.query.companyId) {
+        query.companyId = Number(req.query.companyId);
+      }
+      if (req.query.status) {
+        query.status = req.query.status;
+      }
+      const result = await jobsCollection.find(query).toArray();
       return res.send(result);
     });
 
@@ -53,6 +60,23 @@ async function run() {
         res.status(500).json({ success: false, error: error.message });
       }
     });
+
+
+
+    // Company related APIs
+    app.post('/api/companies', async (req, res) => {
+      const company = req.body;
+      const result = await companyCollection.insertOne(company);
+      res.send(result)
+    })
+
+
+
+
+
+
+
+
   } catch (error) {
     console.error("MongoDB Connection Error:", error);
   }
