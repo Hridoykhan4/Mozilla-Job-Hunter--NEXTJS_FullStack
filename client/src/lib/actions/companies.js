@@ -1,15 +1,7 @@
 "use server";
+
+import { serverMutate } from "../core/server";
+
 export const createCompany = async (newCompany) => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/companies`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(newCompany),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    return { success: false, error: data.message || "Something went wrong" };
-  }
-  return { success: true, data };
+  return serverMutate('/api/companies', newCompany, "POST")
 };
