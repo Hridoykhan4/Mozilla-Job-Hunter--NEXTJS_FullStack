@@ -61,22 +61,23 @@ async function run() {
       }
     });
 
-
-
     // Company related APIs
-    app.post('/api/companies', async (req, res) => {
+    app.post("/api/companies", async (req, res) => {
       const company = req.body;
       const result = await companyCollection.insertOne(company);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
+    app.get("/api/my/companies", async (req, res) => {
+      let query = {};
+      const { recruiterId } = req.query;
+      if (recruiterId) {
+        query.recruiterId = recruiterId;
+      }
 
-
-
-
-
-
-
+      const result = await companyCollection.find(query).toArray();
+      res.send(recruiterId ? result : {});
+    });
   } catch (error) {
     console.error("MongoDB Connection Error:", error);
   }

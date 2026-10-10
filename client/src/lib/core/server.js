@@ -2,6 +2,13 @@ import { redirect } from "next/navigation";
 
 const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
+
+export const serverFetch = async path => {
+    const res = await fetch(`${baseURL}${path}`)
+    return handleStatusCode(res)
+}
+
+
 export const serverMutate = async (path, bodyData, method = "POST") => {
   try {
     const res = await fetch(`${baseURL}${path}`, {
@@ -34,3 +41,9 @@ export const serverMutate = async (path, bodyData, method = "POST") => {
     return { success: false, error: error.message || "Something went wrong" };
   }
 };
+
+
+
+const handleStatusCode = res => {
+    return res.json()
+}

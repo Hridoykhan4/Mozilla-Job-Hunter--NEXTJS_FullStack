@@ -8,6 +8,7 @@ import Link from "next/link";
 export async function DashboardSidebar() {
 
     const user = await getUserSession();
+    console.log(user);
 
     const recruiterNavLinks = [
         { icon: House, href: "/dashboard/recruiter", label: "Home" },

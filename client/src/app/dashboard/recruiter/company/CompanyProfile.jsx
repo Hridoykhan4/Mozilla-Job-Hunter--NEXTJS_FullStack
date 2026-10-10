@@ -14,7 +14,7 @@ import {
     Button,
     toast
 } from '@heroui/react';
-import { ArrowUpToLine, Globe, Factory, ArrowRight, Pencil, ChevronDown } from '@gravity-ui/icons';
+import { ArrowUpToLine, Globe, Factory, ArrowRight, Pencil, ChevronDown, Plus } from '@gravity-ui/icons';
 import { createCompany } from '@/lib/actions/companies';
 
 const textInputClass = "w-full bg-zinc-900/50 border border-zinc-800 text-white rounded-lg px-3 py-2.5 outline-none placeholder:text-zinc-600 focus:border-zinc-700 transition";
@@ -24,17 +24,23 @@ const popoverClasses = "bg-zinc-950 border border-zinc-800 rounded-lg p-1 shadow
 const listItemClasses = "text-zinc-300 px-3 py-2 rounded-md cursor-pointer hover:bg-zinc-900 hover:text-white outline-none data-[focused=true]:bg-zinc-900";
 const textAreaClass = "w-full bg-zinc-900/50 border border-zinc-800 text-white rounded-lg p-3 outline-none placeholder:text-zinc-600 focus:border-zinc-700 transition resize-none";
 
-const CompanyProfile = () => {
+const CompanyProfile = ({ recruiter, recruiterCompany }) => {
 
-    const [company, setCompany] = useState(''); // Keeps null initially to showcase empty template structure
+    // Ensure companies list is always an array
+    const [companiesList, setCompaniesList] = useState(
+        Array.isArray(recruiterCompany) ? recruiterCompany : (recruiterCompany ? [recruiterCompany] : [])
+    );
+
+    // Currently active selected company (Default to first one if available)
+    const [selectedCompany, setSelectedCompany] = useState(companiesList[0] || null);
+
     const [isEditing, setIsEditing] = useState(false);
+    const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [errors, setErrors] = useState({});
     const [logoUrl, setLogoUrl] = useState('');
     const [isUploading, setIsUploading] = useState(false);
 
-
-
-    const handleSubmit = async e => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
 
@@ -45,20 +51,16 @@ const CompanyProfile = () => {
         const employeeCount = formData.get('employeeCount');
         const description = formData.get('description');
 
-
-        // Simple Validation Checks
         const newErrors = {};
         if (!companyName) newErrors.companyName = "Company name is required";
         if (!websiteUrl) newErrors.websiteUrl = "Website link is required";
         if (!location) newErrors.location = "Location coordinates required";
-
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
         }
 
-        // Commit state updates
         const newCompanyData = {
             name: companyName,
             websiteUrl,
@@ -66,85 +68,237 @@ const CompanyProfile = () => {
             location,
             employeeCount: employeeCount || '1-10 employees',
             description,
-            logo: logoUrl || (company ? company.logo : ''),
-            status: company && company.status ? company.status : 'Pending',
-            // recruiterId: recruiter.id // Associate company with the current recruiter
+            logo: logoUrl || (selectedCompany && isEditing ? selectedCompany.logo : ''),
+            status: selectedCompany && selectedCompany.status ? selectedCompany.status : 'Pending',
+            recruiterId: recruiter?.id
+        };
 
-        }
+        const payload = await createCompany(newCompanyData);
 
-        setCompany(newCompanyData);
+        if (payload?.data?.insertedId) {
+            const savedCompany = { ...newCompanyData, _id: payload.data.insertedId };
 
-        const payload = await createCompany(newCompanyData)
-       
-        if (payload.data.insertedId) {
-            const savedCompany = { ...company, _id: payload.data.insertedId }
-            setCompany(savedCompany)
-            toast.success("Company profile created successfully!");
+            if (isEditing && selectedCompany?._id) {
+                // Update existing in list
+                setCompaniesList(prev => prev.map(c => c._id === selectedCompany._id ? savedCompany : c));
+            } else {
+                // Append new to list
+                setCompaniesList(prev => [...prev, savedCompany]);
+            }
+
+            setSelectedCompany(savedCompany);
+            toast.success(isEditing ? "Company profile updated successfully!" : "Company profile created successfully!");
             e.target.reset();
-
+        } else {
+            setCompaniesList(prev => [...prev, newCompanyData]);
+            setSelectedCompany(newCompanyData);
+            toast.success("Company profile saved successfully!");
         }
+
         setErrors({});
         setIsEditing(false);
-
-    }
-
+        setIsCreatingNew(false);
+    };
 
     const handleLogoUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024) return setErrors(prev => ({ ...prev, logo: "File size exceeds 5MB limit" }));
+        if (file.size > 5 * 1024 * 1024) {
+            return setErrors(prev => ({ ...prev, logo: "File size exceeds 5MB limit" }));
+        }
 
         setIsUploading(true);
         const formData = new FormData();
         formData.append('image', file);
 
         try {
-
             const IMGBB_API_KEY = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_API;
-            console.log(IMGBB_API_KEY);
             const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
                 method: "POST",
                 body: formData
-            })
+            });
             const data = await res.json();
             if (data.success) {
                 setLogoUrl(data.data.url);
                 setErrors(prev => ({ ...prev, logo: null }));
-            }
-            else {
+            } else {
                 setErrors(prev => ({ ...prev, logo: "Upload failed. Try again." }));
             }
-        }
-        catch (err) {
+        } catch (err) {
             setErrors(prev => ({ ...prev, logo: "Network error during logo upload" }));
+        } finally {
+            setIsUploading(false);
         }
-        finally {
-            setIsUploading(false)
-        }
+    };
+
+    const startRegistration = () => {
+        setLogoUrl('');
+        setSelectedCompany(null);
+        setIsEditing(false);
+        setIsCreatingNew(true);
+    };
+
+    const startEditing = () => {
+        setLogoUrl(selectedCompany?.logo || '');
+        setIsEditing(true);
+        setIsCreatingNew(false);
+    };
+
+    // --- VIEW 1: No Companies Registered Yet ---
+    if (companiesList.length === 0 && !isCreatingNew) {
+        return (
+            <div className="max-w-2xl mx-auto my-12 bg-zinc-950 border border-zinc-900 rounded-xl p-8 text-center space-y-6">
+                <div className="w-16 h-16 bg-zinc-900/50 rounded-full flex items-center justify-center mx-auto border border-zinc-800">
+                    <Factory size={24} className="text-zinc-500" />
+                </div>
+                <div className="space-y-2">
+                    <h2 className="text-xl font-semibold text-zinc-200">No Company Registered Yet</h2>
+                    <p className="text-sm text-zinc-500 max-w-sm mx-auto">
+                        To start creating structural job posts and tracking incoming pipelines, configure your workspace profile.
+                    </p>
+                </div>
+                <Button
+                    onPress={startRegistration}
+                    className="bg-white text-black font-semibold hover:bg-zinc-200 rounded-lg px-6 h-11 transition-all"
+                >
+                    Register Company <ArrowRight size={16} className="ml-1" />
+                </Button>
+            </div>
+        );
     }
 
+    // --- VIEW 2: Display Selected Company Profile with Switcher Bar ---
+    if (selectedCompany && !isEditing && !isCreatingNew) {
+        const getStatusStyles = (status) => {
+            switch (status) {
+                case 'Approved': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                case 'Rejected': return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                default: return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+            }
+        };
 
+        return (
+            <div className="max-w-4xl mx-auto my-8 space-y-6">
+                {/* Multiple Company Switcher Bar */}
+                {companiesList.length > 1 && (
+                    <div className="bg-zinc-950 border border-zinc-900 p-4 rounded-xl flex items-center justify-between gap-4 overflow-x-auto">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-zinc-400 uppercase font-semibold mr-2">Your Companies:</span>
+                            {companiesList.map((comp) => (
+                                <button
+                                    key={comp._id || comp.name}
+                                    onClick={() => setSelectedCompany(comp)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${selectedCompany?._id === comp._id
+                                        ? 'bg-white text-black font-semibold'
+                                        : 'bg-zinc-900 text-zinc-400 hover:text-white'
+                                        }`}
+                                >
+                                    {comp.name}
+                                </button>
+                            ))}
+                        </div>
+                        <Button
+                            onPress={startRegistration}
+                            variant="bordered"
+                            className="border-zinc-800 text-zinc-300 hover:bg-zinc-900 rounded-lg text-xs h-8 px-3 flex items-center gap-1.5 shrink-0"
+                        >
+                            <Plus size={14} /> Add New
+                        </Button>
+                    </div>
+                )}
 
+                {/* Company Details Box */}
+                <div className="bg-zinc-950 border border-zinc-900 rounded-xl p-8 space-y-8">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-6">
+                        <div className="flex items-center gap-4">
+                            {selectedCompany.logo ? (
+                                <img src={selectedCompany.logo} alt={selectedCompany.name} className="w-16 h-16 rounded-xl object-contain bg-zinc-900 p-2 border border-zinc-800" />
+                            ) : (
+                                <div className="w-16 h-16 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                                    <Factory size={24} className="text-zinc-600" />
+                                </div>
+                            )}
+                            <div>
+                                <div className="flex items-center gap-3">
+                                    <h1 className="text-2xl font-bold text-white">{selectedCompany.name}</h1>
+                                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${getStatusStyles(selectedCompany.status)}`}>
+                                        {selectedCompany.status || 'Pending'}
+                                    </span>
+                                </div>
+                                <a href={`https://${selectedCompany.websiteUrl?.replace(/^https?:\/\//, '')}`} target="_blank" rel="noreferrer" className="text-sm text-zinc-400 hover:underline flex items-center gap-1 mt-1">
+                                    <Globe size={14} className="text-zinc-500" /> {selectedCompany.websiteUrl}
+                                </a>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            {companiesList.length === 1 && (
+                                <Button
+                                    onPress={startRegistration}
+                                    variant="bordered"
+                                    className="border-zinc-800 text-zinc-300 hover:bg-zinc-900 rounded-lg px-3 font-medium h-10 flex items-center gap-1.5"
+                                >
+                                    <Plus size={14} /> Add Another
+                                </Button>
+                            )}
+                            <Button
+                                onPress={startEditing}
+                                variant="bordered"
+                                className="border-zinc-800 text-zinc-300 hover:bg-zinc-900 rounded-lg px-4 font-medium h-10 flex items-center gap-2"
+                            >
+                                <Pencil size={14} /> Edit Profile
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-zinc-900/30 border border-zinc-900 p-4 rounded-lg">
+                            <span className="text-xs text-zinc-500 uppercase font-semibold block">Industry Category</span>
+                            <span className="text-zinc-300 font-medium mt-1 block">{selectedCompany.industry}</span>
+                        </div>
+                        <div className="bg-zinc-900/30 border border-zinc-900 p-4 rounded-lg">
+                            <span className="text-xs text-zinc-500 uppercase font-semibold block">Location</span>
+                            <span className="text-zinc-300 font-medium mt-1 block">{selectedCompany.location}</span>
+                        </div>
+                        <div className="bg-zinc-900/30 border border-zinc-900 p-4 rounded-lg">
+                            <span className="text-xs text-zinc-500 uppercase font-semibold block">Company Scale</span>
+                            <span className="text-zinc-300 font-medium mt-1 block">{selectedCompany.employeeCount}</span>
+                        </div>
+                    </div>
+
+                    {selectedCompany.description && (
+                        <div className="space-y-2">
+                            <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">About our Vision & Culture</h3>
+                            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap bg-zinc-900/20 border border-zinc-900/60 p-4 rounded-xl">
+                                {selectedCompany.description}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // --- VIEW 3: Form View (Create New / Edit Existing) ---
+    const activeData = isEditing ? selectedCompany : null;
 
     return (
-
         <div className="max-w-3xl mx-auto my-8 bg-zinc-950 p-8 border border-zinc-900 rounded-xl">
             <Form onSubmit={handleSubmit} className="space-y-8" validationErrors={errors} validationBehavior="aria">
                 <Fieldset className="space-y-6 w-full">
                     <legend className="text-xl font-semibold text-zinc-200 border-b border-zinc-900 w-full pb-3 mb-2">
-                        {company ? 'Update Company Profile' : 'Configure Workspace Platform'}
+                        {isEditing ? 'Update Company Profile' : 'Configure Workspace Platform'}
                     </legend>
 
                     {/* ROW 1: Company Name + Industry */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <TextField name="companyName" defaultValue={company?.name || ''} isInvalid={!!errors.companyName} className="flex flex-col gap-1 w-full">
+                        <TextField name="companyName" defaultValue={activeData?.name || ''} isInvalid={!!errors.companyName} className="flex flex-col gap-1 w-full">
                             <Label className="text-zinc-400 font-medium text-sm">Company Name</Label>
                             <Input placeholder="e.g. Acme Corp" className={textInputClass} />
                             {errors.companyName && <FieldError className="text-xs text-danger mt-1">{errors.companyName}</FieldError>}
                         </TextField>
 
-                        <Select className={selectBoxClass} name="industry" defaultSelectedKeys={[company?.industry || 'technology']}>
+                        <Select className={selectBoxClass} name="industry" defaultSelectedKeys={[activeData?.industry?.toLowerCase() || 'technology']}>
                             <Label className="text-zinc-400 font-medium text-sm mb-1 block">Industry / Category</Label>
                             <Select.Trigger className={triggerClasses}>
                                 <Select.Value className="text-white placeholder:text-zinc-600" />
@@ -163,7 +317,7 @@ const CompanyProfile = () => {
 
                     {/* ROW 2: Website URL + Location */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <TextField name="websiteUrl" defaultValue={company?.websiteUrl || ''} Linda isInvalid={!!errors.websiteUrl} className="flex flex-col gap-1 w-full">
+                        <TextField name="websiteUrl" defaultValue={activeData?.websiteUrl || ''} isInvalid={!!errors.websiteUrl} className="flex flex-col gap-1 w-full">
                             <Label className="text-zinc-400 font-medium text-sm">Website URL</Label>
                             <div className="relative flex items-center">
                                 <span className="absolute left-3 text-zinc-600 text-sm font-medium select-none pointer-events-none border-r border-zinc-800 pr-2">
@@ -174,7 +328,7 @@ const CompanyProfile = () => {
                             {errors.websiteUrl && <FieldError className="text-xs text-danger mt-1">{errors.websiteUrl}</FieldError>}
                         </TextField>
 
-                        <TextField name="location" defaultValue={company?.location || ''} isInvalid={!!errors.location} className="flex flex-col gap-1 w-full">
+                        <TextField name="location" defaultValue={activeData?.location || ''} isInvalid={!!errors.location} className="flex flex-col gap-1 w-full">
                             <Label className="text-zinc-400 font-medium text-sm">Location</Label>
                             <div className="relative flex items-center">
                                 <Globe size={16} className="absolute left-3 text-zinc-600 pointer-events-none z-10" />
@@ -186,7 +340,7 @@ const CompanyProfile = () => {
 
                     {/* ROW 3: Employee Count + Custom File Logo Upload Block */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                        <Select className={selectBoxClass} name="employeeCount" defaultSelectedKeys={[company?.employeeCount || '1-10']}>
+                        <Select className={selectBoxClass} name="employeeCount" defaultSelectedKeys={[activeData?.employeeCount || '1-10']}>
                             <Label className="text-zinc-400 font-medium text-sm mb-1 block">Employee Count Range</Label>
                             <Select.Trigger className={triggerClasses}>
                                 <Select.Value className="text-white" />
@@ -194,15 +348,14 @@ const CompanyProfile = () => {
                             </Select.Trigger>
                             <Select.Popover className={popoverClasses}>
                                 <ListBox className="outline-none">
-                                    <ListBox.Item id="1-10" className={listItemClasses} textValue="1-10 employees">1-10 employees</ListBox.Item>
-                                    <ListBox.Item id="11-50" className={listItemClasses} textValue="11-50 employees">11-50 employees</ListBox.Item>
-                                    <ListBox.Item id="51-200" className={listItemClasses} textValue="51-200 employees">51-200 employees</ListBox.Item>
-                                    <ListBox.Item id="201+" className={listItemClasses} textValue="201+ employees">201+ employees</ListBox.Item>
+                                    <ListBox.Item id="1-10 employees" className={listItemClasses} textValue="1-10 employees">1-10 employees</ListBox.Item>
+                                    <ListBox.Item id="11-50 employees" className={listItemClasses} textValue="11-50 employees">11-50 employees</ListBox.Item>
+                                    <ListBox.Item id="51-200 employees" className={listItemClasses} textValue="51-200 employees">51-200 employees</ListBox.Item>
+                                    <ListBox.Item id="201+ employees" className={listItemClasses} textValue="201+ employees">201+ employees</ListBox.Item>
                                 </ListBox>
                             </Select.Popover>
                         </Select>
 
-                        {/* Custom Styled Upload Block matching attachment blueprint exactly */}
                         <div className="flex flex-col gap-1 w-full">
                             <span className="text-zinc-400 font-medium text-sm">Company Logo</span>
                             <div className="flex items-center gap-4 mt-1">
@@ -231,7 +384,7 @@ const CompanyProfile = () => {
                     </div>
 
                     {/* ROW 4: Full-Width TextArea Brief Description */}
-                    <TextField name="description" defaultValue={company?.description || ''} className="flex flex-col gap-1 w-full">
+                    <TextField name="description" defaultValue={activeData?.description || ''} className="flex flex-col gap-1 w-full">
                         <Label className="text-zinc-400 font-medium text-sm">Brief Description</Label>
                         <TextArea
                             placeholder="Tell us about your company's mission and culture..."
@@ -243,28 +396,27 @@ const CompanyProfile = () => {
 
                 {/* Form Navigation Action Area controls */}
                 <div className="flex justify-end gap-3 pt-5 border-t border-zinc-900 w-full">
-                    {company && (
-                        <Button
-                            type="button"
-                            variant="bordered"
-                            onPress={() => setIsEditing(false)}
-                            className="border-zinc-800 text-zinc-400 hover:bg-zinc-900 rounded-lg px-5 font-medium h-11"
-                        >
-                            Cancel
-                        </Button>
-                    )}
+                    <Button
+                        type="button"
+                        variant="bordered"
+                        onPress={() => {
+                            setIsEditing(false);
+                            setIsCreatingNew(false);
+                        }}
+                        className="border-zinc-800 text-zinc-400 hover:bg-zinc-900 rounded-lg px-5 font-medium h-11"
+                    >
+                        Cancel
+                    </Button>
                     <Button
                         type="submit"
                         className="bg-white text-black font-semibold hover:bg-zinc-200 rounded-lg px-6 transition-colors h-11"
                     >
-                        {company ? 'Save Updates' : 'Complete Setup'}
+                        {isEditing ? 'Save Updates' : 'Complete Setup'}
                     </Button>
                 </div>
             </Form>
         </div>
-
-
     );
 };
 
-export default CompanyProfile;
+export default CompanyProfile; 

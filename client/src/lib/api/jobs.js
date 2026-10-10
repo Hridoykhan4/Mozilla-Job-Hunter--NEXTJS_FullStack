@@ -7,6 +7,5 @@ export const getJobs = async (queryString) => {
 
 export const getCompanyJobs = async (companyId, status = 'active') => {
     const res = await fetch(`${baseUrl}/api/jobs?companyId=${companyId}&status=${status}`)
-    console.log(res);
     return res.json()
 }
