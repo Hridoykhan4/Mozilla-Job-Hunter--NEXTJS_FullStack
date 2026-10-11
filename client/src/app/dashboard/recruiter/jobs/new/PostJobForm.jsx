@@ -20,7 +20,7 @@ import { redirect } from "next/navigation";
 import { createJob } from "@/lib/actions/jobs";
 
 
-const PostJobForm = () => {
+const PostJobForm = ({company}) => {
     const [isRemote, setIsRemote] = useState(false);
     const [errors, setErrors] = useState({});
     const handleSubmit = async e => {
@@ -50,7 +50,7 @@ const PostJobForm = () => {
         const payload = {
             ...data,
             isRemote,
-            companyId: 101,
+            companyId: company._id,
             companyName: 'HonoLulu',
             companyLogo: ``,
             status: "active",
@@ -87,14 +87,14 @@ const PostJobForm = () => {
                     </p>
 
                     {/* Company verification status panel */}
-                    {/* <div className="mt-4 inline-flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-400">
+                    <div className="mt-4 inline-flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-400">
                         <Briefcase size={14} className="text-zinc-500" />
                         Posting as: <span className="font-semibold text-zinc-300">{company.name}</span>
                         <span className="text-emerald-500 font-medium bg-emerald-950/30 px-1.5 py-0.5 rounded border border-emerald-900/50">{company.status}</span>
-                    </div> */}
+                    </div>
                 </div>
 
-                {/* {company.status !== 'Approved' && <div>Please wait to get approval</div>} */}
+                {company.status !== 'Approved' && <div>Please wait to get approval</div>}
 
                 {/* Hero UI Main Form Handler */}
                 <Form onSubmit={handleSubmit} className="space-y-8" validationErrors={errors} validationBehavior='aria'>

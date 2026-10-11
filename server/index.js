@@ -38,11 +38,12 @@ async function run() {
       let query = {};
       console.log(req.query);
       if (req.query.companyId) {
-        query.companyId = Number(req.query.companyId);
+        query.companyId = req.query.companyId
       }
       if (req.query.status) {
         query.status = req.query.status;
       }
+      console.log(await jobsCollection.find(query).toArray());
       const result = await jobsCollection.find(query).toArray();
       return res.send(result);
     });
@@ -75,7 +76,7 @@ async function run() {
         query.recruiterId = recruiterId;
       }
 
-      const result = await companyCollection.find(query).toArray();
+      const result = await companyCollection.findOne(query);
       res.send(recruiterId ? result : {});
     });
   } catch (error) {

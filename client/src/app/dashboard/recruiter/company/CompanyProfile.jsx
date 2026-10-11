@@ -26,10 +26,10 @@ const textAreaClass = "w-full bg-zinc-900/50 border border-zinc-800 text-white r
 
 const CompanyProfile = ({ recruiter, recruiterCompany }) => {
 
+
     // Ensure companies list is always an array
-    const [companiesList, setCompaniesList] = useState(
-        Array.isArray(recruiterCompany) ? recruiterCompany : (recruiterCompany ? [recruiterCompany] : [])
-    );
+    const [companiesList, setCompaniesList] = useState(recruiterCompany)
+
 
     // Currently active selected company (Default to first one if available)
     const [selectedCompany, setSelectedCompany] = useState(companiesList[0] || null);

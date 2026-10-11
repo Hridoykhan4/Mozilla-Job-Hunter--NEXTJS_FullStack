@@ -1,12 +1,14 @@
 import React from 'react';
 import PostJobForm from './PostJobForm';
+import { getLoggedInRecruiterCompany } from '@/lib/api/companies';
 
-const NewJob = () => {
+const PostJobPage = async () => {
+    const company = await getLoggedInRecruiterCompany()
     return (
         <div>
-            <PostJobForm></PostJobForm>
+            <PostJobForm company={company}></PostJobForm>
         </div>
     );
 };
 
-export default NewJob;
+export default PostJobPage;
