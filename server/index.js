@@ -33,12 +33,17 @@ async function run() {
     const db = client.db(process.env.DB_NAME);
     const jobsCollection = db.collection("jobs");
     const companyCollection = db.collection("companies");
+    const usersCollection = db.collection("user");
+
+    app.get("/api/users", async (req, res) => {
+      res.send(await usersCollection.find().toArray());
+    });
 
     app.get("/api/jobs", async (req, res) => {
       let query = {};
       console.log(req.query);
       if (req.query.companyId) {
-        query.companyId = req.query.companyId
+        query.companyId = req.query.companyId;
       }
       if (req.query.status) {
         query.status = req.query.status;
@@ -63,9 +68,26 @@ async function run() {
     });
 
     // Company related APIs
+
+    app.get("/api/companies", async (req, res) => {
+      const companies = await companyCollection.find().toArray();
+      for (const company of companies) {
+        const filter = {
+          companyId: company._id.toString(),
+        };
+        const jobCount = await jobsCollection.countDocuments(filter);
+        company.jobCount = jobCount;
+      }
+      res.send(companies);
+    });
+
     app.post("/api/companies", async (req, res) => {
       const company = req.body;
-      const result = await companyCollection.insertOne(company);
+      const newCompany = {
+        ...company,
+        createdAt: new Date().toISOString(),
+      };
+      const result = await companyCollection.insertOne(newCompany);
       res.send(result);
     });
 
@@ -77,6 +99,11 @@ async function run() {
       }
 
       const result = await companyCollection.findOne(query);
+
+      if (!result) {
+        return res.json({});
+      }
+
       res.send(recruiterId ? result : {});
     });
   } catch (error) {

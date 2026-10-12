@@ -2,12 +2,10 @@ import { redirect } from "next/navigation";
 
 const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
-
-export const serverFetch = async path => {
-    const res = await fetch(`${baseURL}${path}`)
-    return handleStatusCode(res)
-}
-
+export const serverFetch = async (path) => {
+  const res = await fetch(`${baseURL}${path}`);
+  return handleStatusCode(res);
+};
 
 export const serverMutate = async (path, bodyData, method = "POST") => {
   try {
@@ -42,8 +40,15 @@ export const serverMutate = async (path, bodyData, method = "POST") => {
   }
 };
 
-
-
-const handleStatusCode = res => {
-    return res.json()
-}
+const handleStatusCode = async (res) => {
+  const text = await res.text();
+  // Jodi response body khali ba blank thake, tahale null ba empty object return korbe
+  if (!text) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    return null;
+  }
+};

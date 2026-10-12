@@ -20,7 +20,7 @@ import { redirect } from "next/navigation";
 import { createJob } from "@/lib/actions/jobs";
 
 
-const PostJobForm = ({company}) => {
+const PostJobForm = ({ company }) => {
     const [isRemote, setIsRemote] = useState(false);
     const [errors, setErrors] = useState({});
     const handleSubmit = async e => {
@@ -51,8 +51,8 @@ const PostJobForm = ({company}) => {
             ...data,
             isRemote,
             companyId: company._id,
-            companyName: 'HonoLulu',
-            companyLogo: ``,
+            companyName: company.name,
+            companyLogo: company.logo,
             status: "active",
             isPubliclyVisible: true,
         };
