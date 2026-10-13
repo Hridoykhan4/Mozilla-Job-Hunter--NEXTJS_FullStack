@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = 5000;
 require("dotenv").config();
@@ -51,6 +51,12 @@ async function run() {
       console.log(await jobsCollection.find(query).toArray());
       const result = await jobsCollection.find(query).toArray();
       return res.send(result);
+    });
+
+    app.get("/api/jobs/:id", async (req, res) => {
+      const { id } = req.params;
+      const query = { _id: new ObjectId(id) };
+      res.send(await jobsCollection.findOne(query));
     });
 
     // POST Route: নতুন Job তৈরি করার জন্য
