@@ -23,7 +23,7 @@ const JobApply = ({ job, applicant }) => {
 
         const submissionData = {
             jobId: job?._id,
-            jobTitle: job?.title,
+            jobTitle: job?.jobTitle,
             companyName: job?.companyName,
             applicantId: applicant?.id,
             applicantName: applicant?.name,

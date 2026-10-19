@@ -103,13 +103,17 @@ async function run() {
 
     app.get('/api/applications', async(req, res) => {
       const query = {};
-      const {applicantId} = req.query;
-      console.log(req.user);
-      if(applicantId) {
-        // query.applicantId = applicantId
-        // console.log(req.user._id.toString(), applicantId);
+      const {applicantId, jobId} = req.query;
+      // console.log(req.user);
+      // if(applicantId) {
+      //   query.applicantId = applicantId
+      //   console.log(query, req?.user);
+      // }
+      if(jobId) {
+        query.jobId = jobId
       }
-      res.send([])
+
+      res.send(await applicationCollection.find(query).toArray())
     })
 
     app.post("/api/applications", async (req, res) => {
