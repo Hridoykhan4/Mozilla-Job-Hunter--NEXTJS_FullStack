@@ -34,23 +34,49 @@ async function run() {
     const jobsCollection = db.collection("jobs");
     const companyCollection = db.collection("companies");
     const usersCollection = db.collection("user");
+    const applicationCollection = db.collection("applications");
 
-    app.get("/api/users", async (req, res) => {
-      res.send(await usersCollection.find().toArray());
-    });
+    // app.get("/api/users", async (req, res) => {
+    //   res.send(await usersCollection.find().toArray());
+    // });
 
     app.get("/api/jobs", async (req, res) => {
       let query = {};
-      console.log(req.query);
-      if (req.query.companyId) {
-        query.companyId = req.query.companyId;
+      const {
+        search,
+        jobType,
+        jobTitle,
+        companyName,
+        isRemote,
+        companyId,
+        status,
+      } = req.query;
+
+
+      if (search) {
+        query.$or = [
+          { jobTitle: { $regex: search, $options: "i" } },
+          { companyName: { $regex: search, $options: "i" } },
+        ];
       }
-      if (req.query.status) {
-        query.status = req.query.status;
+
+      if (jobType) {
+        query.jobType = jobType;
       }
-      console.log(await jobsCollection.find(query).toArray());
+
+      if (isRemote) {
+        query.isRemote = Boolean(isRemote);
+      }
+
+      if (companyId) {
+        query.companyId = companyId;
+      }
+      if (status) {
+        query.status = status;
+      }
       const result = await jobsCollection.find(query).toArray();
-      return res.send(result);
+      const total = await jobsCollection.countDocuments(query);
+      return res.send({ jobs: result, total });
     });
 
     app.get("/api/jobs/:id", async (req, res) => {
@@ -73,7 +99,34 @@ async function run() {
       }
     });
 
+    // Application related APIs
+
+    app.get('/api/applications', async(req, res) => {
+      const query = {};
+      const {applicantId} = req.query;
+      console.log(req.user);
+      if(applicantId) {
+        // query.applicantId = applicantId
+        // console.log(req.user._id.toString(), applicantId);
+      }
+      res.send([])
+    })
+
+    app.post("/api/applications", async (req, res) => {
+      const application = req.body;
+      const newApplication = {
+        ...application,
+        createdAt: new Date(),
+      };
+      const result = await applicationCollection.insertOne(newApplication);
+      res.send(result);
+    });
+
     // Company related APIs
+
+
+  
+
 
     app.get("/api/companies", async (req, res) => {
       const companies = await companyCollection.find().toArray();

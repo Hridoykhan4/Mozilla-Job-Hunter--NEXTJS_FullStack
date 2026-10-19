@@ -1,10 +1,12 @@
 import React from 'react';
 import SigninForm from './SigninForm';
 
-const SigninPage = () => {
+const SigninPage = async({searchParams}) => {;
+    const {redirect} = await searchParams || '/';
+    
     return (
         <div>
-            <SigninForm redirectTo='/'></SigninForm>
+            <SigninForm redirectTo={redirect}></SigninForm>
         </div>
     );
 };

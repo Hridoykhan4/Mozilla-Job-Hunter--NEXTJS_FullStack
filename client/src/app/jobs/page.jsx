@@ -3,18 +3,18 @@ import { getJobs } from '@/lib/api/jobs';
 import React from 'react';
 
 const JobsPage = async ({ searchParams }) => {
-    const jobs = await getJobs()
-
     const filters = await searchParams;
+
     const filterObj = {
         ...filters,
-        isRemote: filters.isRemote === 'true' ? true : false
+        isRemote: filters.isRemote ? true : false
     }
 
-    const querySearch = new URLSearchParams(filters);
-    const queryString = querySearch.toString();
+    // 1. searchParams ke URLSearchParams diye string-e convert korun
+    const queryString = new URLSearchParams(filters).toString();
 
-    // console.log('search q', filters, queryString);
+    // 2. queryString ta getJobs-er vitor pass korun, jate API-te query jay
+    const { jobs, total } = await getJobs(queryString);
 
     return (
         <div className="w-full min-h-screen bg-zinc-950 p-6 md:p-12 text-white">
@@ -24,7 +24,7 @@ const JobsPage = async ({ searchParams }) => {
             </div>
 
             {/* Pass data to the Client Wrapper to handle filtering interactivity */}
-            <JobListingContainer jobs={jobs || []}  />
+            <JobListingContainer filters={filterObj} total={total} jobs={jobs || []} />
         </div>
     );
 };

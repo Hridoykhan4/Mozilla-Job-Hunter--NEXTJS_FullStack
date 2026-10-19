@@ -22,6 +22,7 @@ import { authClient, signIn } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 const SigninForm = ({ redirectTo = '/' }) => {
 
+
     // Form fields
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -36,7 +37,7 @@ const SigninForm = ({ redirectTo = '/' }) => {
 
     const toggleVisibility = () =>
         setIsVisible((prev) => !prev);
-    const handleSignin = async (e) => {
+        const handleSignin = async (e) => {
         e.preventDefault();
 
         setError("");
