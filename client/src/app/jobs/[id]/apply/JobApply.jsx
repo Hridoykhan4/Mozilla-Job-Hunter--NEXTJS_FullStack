@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { Form, Button, TextField, Label, Input, Description, FieldError, Link } from '@heroui/react';
+import { Form, Button, TextField, Label, Input, Description, FieldError, Link, toast } from '@heroui/react';
 import { ArrowRight, FileText, LayoutGridCircles } from 'lucide-react';
 import { submitApplication } from '@/lib/actions/applications';
 
@@ -33,11 +33,11 @@ const JobApply = ({ job, applicant }) => {
         }
 
         const res = await submitApplication(submissionData);
+        if(res.error) return alert(`${res.error}`)
         if (res.data.insertedId) {
             alert('Application submitted successfully!');
             setFormData({ resumeLink: '', portfolioLink: '', additionalNotes: '' });
         }
-
     }
 
     return (

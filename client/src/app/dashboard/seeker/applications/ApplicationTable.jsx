@@ -103,6 +103,7 @@ const ApplicationsTable = ({ jobs = [] }) => {
                                 const workType = job.jobType || "Full-time";
                                 const locationType = job.isRemote ? "Remote" : (job.location || "On-site");
                                 const status = job.status || "Applied";
+                                // eslint-disable-next-line react-hooks/purity
                                 const rowKey = job._id?.$oid || job._id || Math.random();
 
                                 return (

@@ -52,7 +52,6 @@ async function run() {
         status,
       } = req.query;
 
-
       if (search) {
         query.$or = [
           { jobTitle: { $regex: search, $options: "i" } },
@@ -101,20 +100,24 @@ async function run() {
 
     // Application related APIs
 
-    app.get('/api/applications', async(req, res) => {
+    app.get("/api/applications", async (req, res) => {
       const query = {};
-      const {applicantId, jobId} = req.query;
+      const { applicantId, jobId } = req.query;
       // console.log(req.user);
       // if(applicantId) {
       //   query.applicantId = applicantId
       //   console.log(query, req?.user);
       // }
-      if(jobId) {
-        query.jobId = jobId
+      if (jobId) {
+        query.jobId = jobId;
       }
 
-      res.send(await applicationCollection.find(query).toArray())
-    })
+      if (applicantId) {
+        query.applicantId = applicantId;
+      }
+
+      res.send(await applicationCollection.find(query).toArray());
+    });
 
     app.post("/api/applications", async (req, res) => {
       const application = req.body;
@@ -122,15 +125,21 @@ async function run() {
         ...application,
         createdAt: new Date(),
       };
+      console.log(req.body.jobId, req.body.applicantId);
+      const isExist = await applicationCollection.findOne({
+        jobId: req.body.jobId,
+        applicantId: req.body.applicantId,
+      });
+      if (isExist)
+        return res
+          .status(409)
+          .send({ message: "Already Applied for this post" });
+
       const result = await applicationCollection.insertOne(newApplication);
       res.send(result);
     });
 
     // Company related APIs
-
-
-  
-
 
     app.get("/api/companies", async (req, res) => {
       const companies = await companyCollection.find().toArray();
@@ -168,6 +177,14 @@ async function run() {
       }
 
       res.send(recruiterId ? result : {});
+    });
+
+    app.get("/api/plans", async (req, res) => {
+      const query = {};
+      const { plan_id } = req.query;
+      if (plan_id) {
+        query.id = plan_id;
+      }
     });
   } catch (error) {
     console.error("MongoDB Connection Error:", error);
