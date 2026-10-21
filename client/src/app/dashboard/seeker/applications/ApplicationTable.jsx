@@ -87,7 +87,7 @@ const ApplicationsTable = ({ jobs = [] }) => {
                             <th className="py-4 w-[20%]">Company</th>
                             <th className="py-4 w-[15%]">Applied</th>
                             <th className="py-4 w-[15%]">Status</th>
-                            <th className="py-4 pr-4 w-[10%] text-right">Action</th>
+                            <th className="py-4 pr-4 w-[10%] text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-800/40">
