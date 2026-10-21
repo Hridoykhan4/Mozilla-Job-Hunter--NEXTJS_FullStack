@@ -94,7 +94,7 @@ const ApplicationsTable = ({ jobs = [] }) => {
                         {jobs.length === 0 ? (
                             <tr>
                                 <td colSpan="5" className="py-8 text-center text-zinc-500 text-sm">
-                                    No applications found.
+                                    No applications found!!
                                 </td>
                             </tr>
                         ) : (
