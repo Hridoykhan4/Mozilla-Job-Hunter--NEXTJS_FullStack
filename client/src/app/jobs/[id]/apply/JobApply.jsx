@@ -1,11 +1,13 @@
-'use client'
-import React, { useState } from 'react';
-import { Form, Button, TextField, Label, Input, Description, FieldError, Link, toast } from '@heroui/react';
-import { ArrowRight, FileText, LayoutGridCircles } from 'lucide-react';
-import { submitApplication } from '@/lib/actions/applications';
+'use client';
 
+import React, { useState } from 'react';
+import { Form, Button, TextField, Label, Input, Description, FieldError } from '@heroui/react';
+import { ArrowRight, FileText, LayoutGridCircles, Link as LinkIcon } from 'lucide-react';
+import { submitApplication } from '@/lib/actions/applications';
+import { useRouter } from 'next/navigation';
 
 const JobApply = ({ job, applicant }) => {
+    const router = useRouter();
 
     const [formData, setFormData] = useState({
         resumeLink: '',
@@ -33,10 +35,11 @@ const JobApply = ({ job, applicant }) => {
         }
 
         const res = await submitApplication(submissionData);
-        if(res.error) return alert(`${res.error}`)
+        if (res.error) return alert(`${res.error}`)
         if (res.data.insertedId) {
             alert('Application submitted successfully!');
             setFormData({ resumeLink: '', portfolioLink: '', additionalNotes: '' });
+            router.refresh(); 
         }
     }
 
@@ -48,7 +51,7 @@ const JobApply = ({ job, applicant }) => {
                     Application Form
                 </span>
                 <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mt-1">
-                    Apply for {job?.title || 'this position'}
+                    Apply for {job?.jobTitle || 'this position'}
                 </h2>
                 {applicant?.name && (
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
@@ -84,7 +87,7 @@ const JobApply = ({ job, applicant }) => {
                 {/* 2. Portfolio Link (Optional) */}
                 <TextField name="portfolioLink" className="w-full">
                     <Label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 mb-1.5">
-                        <Link className="w-4 h-4 text-zinc-400" />
+                        <LinkIcon className="w-4 h-4 text-zinc-400" />
                         Portfolio / Website <span className="text-xs text-zinc-400 font-normal">(Optional)</span>
                     </Label>
                     <Input
@@ -105,7 +108,6 @@ const JobApply = ({ job, applicant }) => {
                         <LayoutGridCircles className="w-4 h-4 text-zinc-400" />
                         Short Message / Notes <span className="text-xs text-zinc-400 font-normal">(Optional)</span>
                     </Label>
-                    {/* Using a standard textarea wrapped safely inside Hero UI's TextField context */}
                     <textarea
                         name="additionalNotes"
                         rows={4}
