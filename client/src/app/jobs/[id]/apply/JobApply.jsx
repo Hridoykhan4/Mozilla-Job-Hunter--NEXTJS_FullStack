@@ -39,7 +39,7 @@ const JobApply = ({ job, applicant }) => {
         if (res.data.insertedId) {
             alert('Application submitted successfully!');
             setFormData({ resumeLink: '', portfolioLink: '', additionalNotes: '' });
-            router.refresh(); 
+            router.refresh();
         }
     }
 

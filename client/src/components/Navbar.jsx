@@ -58,7 +58,7 @@ function Navbar() {
 
                     <div className="hidden leading-none sm:block">
                         <h1 className="text-lg font-bold text-white">
-                            Hire Loop
+                            Hire Loop 
                         </h1>
                     </div>
                 </Link>
@@ -89,7 +89,7 @@ function Navbar() {
                             {
                                 user ?
                                     <>
-                                        Hi, {user.name}!
+                                        Hi, {user.name}! ({user?.role})
                                         <Button onClick={handleSignOut}
                                             variant="ghost">Sign Out</Button>
                                     </>
