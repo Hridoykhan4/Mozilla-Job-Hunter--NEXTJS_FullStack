@@ -35,8 +35,8 @@ async function run() {
     const companyCollection = db.collection("companies");
     const usersCollection = db.collection("user");
     const applicationCollection = db.collection("applications");
-    const planCollection = database.collection("plans");
-    const subscriptionCollection = database.collection("subscriptions");
+    const planCollection = db.collection("plans");
+    const subscriptionCollection = db.collection("subscriptions");
     // app.get("/api/users", async (req, res) => {
     //   res.send(await usersCollection.find().toArray());
     // });

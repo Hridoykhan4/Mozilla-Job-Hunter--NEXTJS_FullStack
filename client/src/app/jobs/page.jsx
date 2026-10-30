@@ -15,6 +15,7 @@ const JobsPage = async ({ searchParams }) => {
 
     // 2. queryString ta getJobs-er vitor pass korun, jate API-te query jay
     const { jobs, total } = await getJobs(queryString);
+   
 
     return (
         <div className="w-full min-h-screen bg-zinc-950 p-6 md:p-12 text-white">

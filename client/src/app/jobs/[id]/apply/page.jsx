@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import React from 'react';
 import JobApply from './JobApply';
 import { getApplicationByApplicant } from '@/lib/api/applications';
+import { getPlanById } from '@/lib/api/plans';
 
 const ApplyPage = async ({ params }) => {
     const { id } = await params;
@@ -52,11 +53,8 @@ const ApplyPage = async ({ params }) => {
     const applications = await getApplicationByApplicant(user.id);
     const applicationCount = applications?.length || 0;
     
-    const plan = {
-        name: "Free Tier",
-        maxApplicationsPerMonth: 3
-    };
-
+    const plan = await getPlanById(user?.plan || 'seeker_free')
+    console.log(plan);
     const hasReachedLimit = applicationCount >= plan.maxApplicationsPerMonth;
     // Fix: Proper percentage calculation for the progress bar
     const usagePercentage = Math.min(Math.round((applicationCount / plan.maxApplicationsPerMonth) * 100), 100);

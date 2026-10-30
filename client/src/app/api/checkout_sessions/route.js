@@ -13,7 +13,7 @@ export async function POST(request) {
 
     const formData = await request.formData();
     const planId = formData.get("plan_id");
-    const priceId = "price_1UUtki2KnGy6ePsJFSRWTBYK";
+    const priceId = PLAN_PRICE_ID[planId];
 
     const user = await getUserSession();
 
