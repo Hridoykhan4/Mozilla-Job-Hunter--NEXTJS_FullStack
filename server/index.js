@@ -35,7 +35,8 @@ async function run() {
     const companyCollection = db.collection("companies");
     const usersCollection = db.collection("user");
     const applicationCollection = db.collection("applications");
-
+    const planCollection = database.collection("plans");
+    const subscriptionCollection = database.collection("subscriptions");
     // app.get("/api/users", async (req, res) => {
     //   res.send(await usersCollection.find().toArray());
     // });
@@ -185,6 +186,31 @@ async function run() {
       if (plan_id) {
         query.id = plan_id;
       }
+      const plan = await planCollection.findOne(query);
+      res.send(plan);
+    });
+
+    // Subscription
+    app.post("/api/subscriptions", async (req, res) => {
+      const data = req.body;
+      const subInfo = {
+        ...data,
+        createdAt: new Date().toISOString(),
+      };
+      const result = await subscriptionCollection.insertOne(subInfo);
+
+      const filter = { email: data.email };
+      const updateDocument = {
+        $set: {
+          plan: data.planId,
+        },
+      };
+
+      const updateResult = await usersCollection.updateOne(
+        filter,
+        updateDocument,
+      );
+      res.send(updateResult);
     });
   } catch (error) {
     console.error("MongoDB Connection Error:", error);
