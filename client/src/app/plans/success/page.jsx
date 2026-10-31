@@ -23,7 +23,7 @@ export default async function SuccessPage({ searchParams }) {
     if (status === 'open') {
         return redirect('/')
     }
-
+    console.log(metadata);
     if (status === 'complete') {
         const subsInfo = {
             email: customerEmail,

@@ -64,9 +64,9 @@ async function run() {
         query.jobType = jobType;
       }
 
-      if (isRemote) {
-        query.isRemote = Boolean(isRemote);
-      }
+     if (isRemote !== undefined) {
+       query.isRemote = isRemote === "true" || isRemote === true;
+     }
 
       if (companyId) {
         query.companyId = companyId;

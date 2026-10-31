@@ -40,7 +40,7 @@ const ApplyPage = async ({ params }) => {
                         Only job seekers can apply for positions. Please sign in with a seeker account to proceed.
                     </p>
                     <Link
-                        href="/auth/signin"
+                        href="/signin"
                         className="inline-block w-full py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-sm font-semibold transition-all shadow-inner"
                     >
                         Switch Account

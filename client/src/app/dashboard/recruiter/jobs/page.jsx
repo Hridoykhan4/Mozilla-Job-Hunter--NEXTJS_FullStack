@@ -6,7 +6,7 @@ import { getLoggedInRecruiterCompany } from '@/lib/api/companies';
 
 const RecruiterJobs = async () => {
     const company = await getLoggedInRecruiterCompany();
-    const jobs = await getCompanyJobs(company._id) || [];
+    const {jobs} = await getCompanyJobs(company._id) || [];
 
 
     const getStatusColor = (status) => {
