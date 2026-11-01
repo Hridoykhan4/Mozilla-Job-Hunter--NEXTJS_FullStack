@@ -207,7 +207,7 @@ const SigninForm = ({ redirectTo = '/' }) => {
                     <div className="text-center pt-4 border-t border-zinc-100 dark:border-zinc-800 mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                         New to HireLoop?{" "}
                         <Link
-                            href={`/auth/signup?redirect=${encodeURIComponent(
+                            href={`/signup?redirect=${encodeURIComponent(
                                 redirectTo
                             )}`}
                             className="font-medium text-blue-600 dark:text-blue-400"

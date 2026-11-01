@@ -1,4 +1,5 @@
-'use client'
+"use client";
+
 import { useState } from "react";
 import {
     Card,
@@ -18,12 +19,12 @@ import {
     At,
     ShieldKeyhole,
 } from "@gravity-ui/icons";
+
+import { signUp } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
 
-
-
-const SignupForm = ({ redirectTo = '/' }) => {
+export default function SignupForm({ redirectTo = "/" }) {
+    // Form fields
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -35,17 +36,15 @@ const SignupForm = ({ redirectTo = '/' }) => {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-
     const router = useRouter();
-    const toggleVisibility = () => setIsVisible((prev) => !prev);
 
+    const toggleVisibility = () => setIsVisible((prev) => !prev);
 
     const handleSignup = async (e) => {
         e.preventDefault();
 
         setError("");
         setSuccess("");
-
 
         if (!name.trim()) {
             setError("Name is required.");
@@ -62,7 +61,6 @@ const SignupForm = ({ redirectTo = '/' }) => {
             return;
         }
 
-
         setIsLoading(true);
 
         const plan =
@@ -70,16 +68,14 @@ const SignupForm = ({ redirectTo = '/' }) => {
                 ? "seeker_free"
                 : "recruiter_free";
 
-
         try {
-            const { error: authError } = await authClient.signUp.email({
+            const { error: authError } = await signUp.email({
                 email,
                 password,
                 name,
                 role,
                 plan,
-            })
-
+            });
 
             if (authError) {
                 setError(
@@ -90,26 +86,19 @@ const SignupForm = ({ redirectTo = '/' }) => {
             }
 
             setSuccess("Account created successfully!");
+
             setName("");
             setEmail("");
             setPassword("");
 
             router.push(redirectTo);
-
+        } catch (err) {
+            console.error(err);
+            setError("An unexpected network error occurred.");
+        } finally {
+            setIsLoading(false);
         }
-
-        catch (err) {
-            console.log(err);
-            setError('An unexpected network error occurred')
-        }
-        finally {
-            setIsLoading(false)
-        }
-
-
-    }
-
-
+    };
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
@@ -305,6 +294,4 @@ const SignupForm = ({ redirectTo = '/' }) => {
             </Card>
         </div>
     );
-};
-
-export default SignupForm;
+}
