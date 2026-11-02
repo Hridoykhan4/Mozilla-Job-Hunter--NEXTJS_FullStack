@@ -5,8 +5,8 @@ const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export const authHeader = async () => {
   const token = await getUserToken();
-  const header = token ? {authorization: `Bearer ${token}`} : {}
-  return header
+  const header = token ? { authorization: `Bearer ${token}` } : {};
+  return header;
 };
 
 export const serverFetch = async (path) => {
@@ -27,6 +27,7 @@ export const serverMutate = async (path, bodyData, method = "POST") => {
       method: method,
       headers: {
         "Content-Type": "application/json",
+        ...(await authHeader()),
       },
       body: JSON.stringify(bodyData),
     });

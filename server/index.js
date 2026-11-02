@@ -7,6 +7,10 @@ require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
+// const logger = (req, res, next) => {
+//   console.log("Logged middleware Logged", req.params);
+//   next();
+// };
 
 const uri = process.env.MONGO_DB_URI;
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -37,9 +41,64 @@ async function run() {
     const applicationCollection = db.collection("applications");
     const planCollection = db.collection("plans");
     const subscriptionCollection = db.collection("subscriptions");
+    const sessionCollection = db.collection("session");
     // app.get("/api/users", async (req, res) => {
     //   res.send(await usersCollection.find().toArray());
     // });
+
+    app.get("/", (req, res) => {
+      res.send("We are there");
+    });
+
+    const verifyToken = async (req, res, next) => {
+      const authHeader = req?.headers?.authorization;
+      if (!authHeader) {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      const token = authHeader?.split(" ")[1];
+      if (!token) {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      const query = { token: token };
+      const session = await sessionCollection.findOne(query);
+      if (!session)
+        return res.status(401).send({ message: "Unauthorized Access" });
+
+      const userId = session?.userId;
+
+      const userQuery = {
+        _id: userId,
+      };
+
+      const user = await usersCollection.findOne(userQuery);
+      // console.log(user);
+
+      if (!user)
+        return res.status(401).send({ message: "unauthorized access" });
+
+      req.user = user;
+      next();
+    };
+
+    const verifySeeker = async (req, res, next) => {
+      if (req?.user?.role !== "seeker")
+        return res.status(403).send({ message: "Forbidden Access" });
+      next();
+    };
+
+    const verifyRecruiter = async (req, res, next) => {
+      if (req.user?.role !== "recruiter") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
+    const   dmin = async (req, res, next) => {
+      if (req.user.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
 
     app.get("/api/jobs", async (req, res) => {
       let query = {};
@@ -64,9 +123,9 @@ async function run() {
         query.jobType = jobType;
       }
 
-     if (isRemote !== undefined) {
-       query.isRemote = isRemote === "true" || isRemote === true;
-     }
+      if (isRemote !== undefined) {
+        query.isRemote = isRemote === "true" || isRemote === true;
+      }
 
       if (companyId) {
         query.companyId = companyId;
@@ -101,24 +160,27 @@ async function run() {
 
     // Application related APIs
 
-    app.get("/api/applications", async (req, res) => {
-      const query = {};
-      const { applicantId, jobId } = req.query;
-      // console.log(req.user);
-      // if(applicantId) {
-      //   query.applicantId = applicantId
-      //   console.log(query, req?.user);
-      // }
-      if (jobId) {
-        query.jobId = jobId;
-      }
+    app.get(
+      "/api/applications",
+      verifyToken,
+      verifySeeker,
+      async (req, res) => {
+        const query = {};
+        const { applicantId, jobId } = req.query;
 
-      if (applicantId) {
-        query.applicantId = applicantId;
-      }
+        if (jobId) {
+          query.jobId = jobId;
+        }
 
-      res.send(await applicationCollection.find(query).toArray());
-    });
+        if (applicantId) {
+          query.applicantId = applicantId;
+          if (req.user._id.toString() !== applicantId)
+            return res.status(403).send({ message: "Forbidden Access" });
+        }
+
+        res.send(await applicationCollection.find(query).toArray());
+      },
+    );
 
     app.post("/api/applications", async (req, res) => {
       const application = req.body;
@@ -126,7 +188,6 @@ async function run() {
         ...application,
         createdAt: new Date(),
       };
-      console.log(req.body.jobId, req.body.applicantId);
       const isExist = await applicationCollection.findOne({
         jobId: req.body.jobId,
         applicantId: req.body.applicantId,
@@ -142,8 +203,11 @@ async function run() {
 
     // Company related APIs
 
-    app.get("/api/companies", async (req, res) => {
-      const companies = await companyCollection.find().toArray();
+    app.get("/api/companies", verifyToken, async (req, res) => {
+      const companies = await companyCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .toArray();
       for (const company of companies) {
         const filter = {
           companyId: company._id.toString(),
@@ -152,6 +216,46 @@ async function run() {
         company.jobCount = jobCount;
       }
       res.send(companies);
+    });
+
+    // app.get('/api/companies2', async (req, res) => {
+    //   const pipeline = [
+    //     {
+    //       $skip: 1
+    //     },
+    //     // {
+    //     //   $limit: 2
+    //     // }
+    //   ]
+
+    //   res.send(await companyCollection.aggregate(pipeline).toArray())
+
+    // })
+    app.get("/api/stats", async (req, res) => {
+      const pipeline = [
+        {
+          $group: {
+            _id: "$jobType",
+            count: {
+              $sum: 1,
+            },
+          },
+        },
+        {
+          $project: {
+            jobType: "$_id",
+            _id: 0,
+            count: 1,
+          },
+        },
+        {
+          $sort: { count: 1 },
+        },
+      ];
+
+      const cursor = jobsCollection.aggregate(pipeline);
+      const result = await cursor.toArray();
+      res.send(result);
     });
 
     app.post("/api/companies", async (req, res) => {
@@ -179,6 +283,25 @@ async function run() {
 
       res.send(recruiterId ? result : {});
     });
+
+    app.patch(
+      "/api/companies/:id",
+      // logger,
+      verifyToken,
+      // verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const updatedCompany = req.body;
+        const filter = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            status: updatedCompany.status,
+          },
+        };
+        const result = await companyCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      },
+    );
 
     app.get("/api/plans", async (req, res) => {
       const query = {};
