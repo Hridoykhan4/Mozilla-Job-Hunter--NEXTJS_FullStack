@@ -3,15 +3,16 @@
 import { useState } from "react";
 import { Button, Link } from "@heroui/react";
 import { signOut, useSession } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { data: session } = useSession();
     const user = session?.user;
-
+    const router = useRouter()
     const handleSignOut = async () => {
         await signOut();
-
+        router.push('/signin')
     }
 
     const navLinks = [
